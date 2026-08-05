@@ -762,14 +762,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     const rosterIds = Object.keys(STUDENT_ROSTER).sort();
 
-    // Check if line starts with student ID (e.g., 30101: content)
+    // Check if line starts with student ID (e.g., 30101, 강민찬, content or 30101: content)
     let hasExplicitId = false;
     lines.forEach(line => {
+      // Regex matches: 30101 followed by optional delimiters, optional name, optional delimiters
       const match = line.match(/^(301\d{2})[:\t, ]+(.*)/);
       if (match) {
         hasExplicitId = true;
         const id = match[1];
-        const fbText = match[2].trim();
+        let fbText = match[2].trim();
+        
+        // If student name exists at the start of fbText, strip it!
+        const studentName = STUDENT_ROSTER[id];
+        if (studentName) {
+          fbText = cleanFeedbackText(fbText, studentName);
+        }
+        
         if (STUDENT_ROSTER[id]) {
           parsedBatchMap[id] = fbText;
         }
@@ -781,7 +789,9 @@ document.addEventListener('DOMContentLoaded', () => {
       lines.forEach((lineText, index) => {
         if (index < rosterIds.length) {
           const studentId = rosterIds[index];
-          parsedBatchMap[studentId] = lineText;
+          const studentName = STUDENT_ROSTER[studentId];
+          const cleanedText = cleanFeedbackText(lineText, studentName);
+          parsedBatchMap[studentId] = cleanedText;
         }
       });
     }
@@ -793,16 +803,48 @@ document.addEventListener('DOMContentLoaded', () => {
     parsedBatchMap = {};
     const lines = csvText.split('\n');
     lines.forEach(line => {
-      const parts = line.split(',');
+      if (!line.trim()) return;
+      
+      // Smart CSV Split handling quotes
+      const parts = line.split(',').map(p => p.trim().replace(/^"|"$/g, ''));
       if (parts.length >= 2) {
-        const id = parts[0].trim().replace(/"/g, '');
-        const fb = parts.slice(1).join(',').trim().replace(/"/g, '');
-        if (STUDENT_ROSTER[id]) {
-          parsedBatchMap[id] = fb;
+        const idCandidate = parts[0].trim();
+        // Check if first column is student ID
+        if (STUDENT_ROSTER[idCandidate]) {
+          const id = idCandidate;
+          const name = STUDENT_ROSTER[id];
+          let fbText = "";
+          
+          if (parts.length >= 3) {
+            // Case: [학번, 이름, 피드백...] -> Ignore 2nd column (Name)!
+            fbText = parts.slice(2).join(',').trim();
+          } else {
+            // Case: [학번, 피드백...]
+            fbText = parts[1].trim();
+          }
+
+          fbText = cleanFeedbackText(fbText, name);
+          parsedBatchMap[id] = fbText;
         }
       }
     });
     renderBatchPreview();
+  }
+
+  // Helper: Strip leading student name, commas, colons, or dashes from feedback string
+  function cleanFeedbackText(str, name) {
+    if (!str) return '';
+    let cleaned = str.trim();
+    
+    // Remove leading name if present (e.g. "강민찬, 피드백..." -> "피드백...")
+    if (name && cleaned.startsWith(name)) {
+      cleaned = cleaned.substring(name.length).trim();
+    }
+    
+    // Remove leading punctuation like comma, colon, dash, tab
+    cleaned = cleaned.replace(/^[:,\t\s\-–—]+/, '').trim();
+    
+    return cleaned;
   }
 
   function renderBatchPreview() {
