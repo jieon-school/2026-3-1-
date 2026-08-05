@@ -678,13 +678,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let parsedBatchMap = {}; // { '30101': '피드백...', '30102': '피드백...' }
 
-  document.getElementById('btn-open-batch-modal').addEventListener('click', () => {
-    parsedBatchMap = {};
-    batchTextInput.value = '';
-    batchCsvFile.value = '';
-    renderBatchPreview();
-    batchModal.classList.remove('hidden');
-  });
+  const btnOpenBatchModal = document.getElementById('btn-open-batch-modal');
+  if (btnOpenBatchModal) {
+    btnOpenBatchModal.addEventListener('click', () => {
+      parsedBatchMap = {};
+      if (batchTextInput) batchTextInput.value = '';
+      if (batchCsvFile) batchCsvFile.value = '';
+      renderBatchPreview();
+      if (batchModal) batchModal.classList.remove('hidden');
+    });
+  }
 
   // Batch Mode Toggle Buttons
   const btnModeText = document.getElementById('btn-mode-text');
