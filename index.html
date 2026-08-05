@@ -264,6 +264,7 @@
           </div>
 
           <div class="admin-actions">
+            <button id="btn-open-batch-modal" class="btn btn-primary">📤 피드백 일괄 등록 (25명 한꺼번에)</button>
             <button id="btn-export-all" class="btn btn-outline">📥 전체 CSV 내보내기</button>
             <button id="btn-export-txt" class="btn btn-outline">📄 TXT 파일 통합 저장</button>
             <button id="btn-init-sample" class="btn btn-secondary">💡 샘플 피드백 생성</button>
@@ -431,6 +432,87 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary modal-close-action">닫기</button>
           <button type="button" id="btn-save-teacher-feedback" class="btn btn-primary">피드백 저장하기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 3: 피드백 25명 영역별 일괄 등록 모달 -->
+    <div id="batch-feedback-modal" class="modal-overlay hidden">
+      <div class="modal-card modal-lg">
+        <div class="modal-header">
+          <h3>📤 25명 피드백 영역별 일괄 등록</h3>
+          <button class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-desc">
+            엑셀이나 텍스트 문서에 작성해두신 25명 피드백을 한 번에 복사+붙여넣기 하거나 CSV 파일로 업로드하여 전체 등록할 수 있습니다.
+          </p>
+
+          <div class="form-group">
+            <label for="batch-domain-select">🎯 피드백을 적용할 영역 선택</label>
+            <select id="batch-domain-select" class="batch-select">
+              <option value="autonomy">🏢 창의적 체험활동 — 자율활동</option>
+              <option value="career">🚀 창의적 체험활동 — 진로활동</option>
+              <option value="korean">📚 교과 세부능력 및 특기사항 — 국어</option>
+              <option value="individual">🌟 개인별 세부능력 및 특기사항</option>
+            </select>
+          </div>
+
+          <div class="batch-mode-toggle">
+            <button class="btn btn-sm btn-outline active" id="btn-mode-text">📝 텍스트 한번에 붙여넣기</button>
+            <button class="btn btn-sm btn-outline" id="btn-mode-csv">📁 CSV 파일 업로드</button>
+            <button class="btn btn-sm btn-secondary" id="btn-fill-batch-template">📋 양식 예시 템플릿 채우기</button>
+          </div>
+
+          <!-- Mode 1: Text Copy & Paste -->
+          <div id="batch-text-container" class="batch-input-group">
+            <div class="batch-guide-box">
+              <strong>💡 입력 형식 (2가지 중 편한 방법을 선택하세요):</strong>
+              <ul>
+                <li><strong>형식 1 (학번+피드백):</strong> <code>30101: 피드백내용</code> (줄마다 입력)</li>
+                <li><strong>형식 2 (25줄 순서대로):</strong> 30101 강민찬부터 30125 김보경까지 25줄을 순서대로 붙여넣기</li>
+              </ul>
+            </div>
+            <textarea id="batch-text-input" class="record-textarea batch-textarea" placeholder="여기에 25명 피드백을 붙여넣으세요...&#10;&#10;예시:&#10;30101: 자율활동 피드백 내용...&#10;30102: 자율활동 피드백 내용..."></textarea>
+          </div>
+
+          <!-- Mode 2: CSV Upload -->
+          <div id="batch-csv-container" class="batch-input-group hidden">
+            <div class="batch-guide-box">
+              <strong>📁 CSV 파일 업로드 안내:</strong>
+              <p>첫 번째 열에 <strong>학번(30101~30125)</strong>, 두 번째 열에 <strong>피드백 내용</strong>이 포함된 CSV 파일을 선택하세요.</p>
+              <button type="button" id="btn-download-csv-template" class="btn btn-sm btn-outline" style="margin-top: 8px;">📥 25명 입력용 CSV 양식 다운로드</button>
+            </div>
+            <input type="file" id="batch-csv-file" accept=".csv, .txt">
+          </div>
+
+          <!-- Preview Table -->
+          <div class="batch-preview-section">
+            <div class="preview-header">
+              <h4>🔍 일괄 등록 파싱 미리보기 (<span id="batch-parsed-count">0</span> / 25명 매핑됨)</h4>
+              <button id="btn-parse-batch" class="btn btn-sm btn-secondary">미리보기 갱신</button>
+            </div>
+            <div class="preview-table-wrapper">
+              <table class="batch-table">
+                <thead>
+                  <tr>
+                    <th>학번</th>
+                    <th>이름</th>
+                    <th>적용될 피드백 미리보기</th>
+                  </tr>
+                </thead>
+                <tbody id="batch-preview-tbody">
+                  <tr>
+                    <td colspan="3" class="text-center">입력 후 [미리보기 갱신] 버튼을 누르세요.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary modal-close-action">취소</button>
+          <button type="button" id="btn-apply-batch" class="btn btn-primary">🚀 25명 피드백 일괄 적용하기</button>
         </div>
       </div>
     </div>

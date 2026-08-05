@@ -235,6 +235,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // --------------------------------------------------------------------------
   const DOMAINS = ['autonomy', 'career', 'korean', 'individual'];
 
+  // 피드백 텍스트 포맷팅 (소괄호 (...) 강조 빨간색 처리)
+  function formatFeedbackText(text) {
+    if (!text) return '등록된 피드백이 없습니다.';
+    // HTML Escape
+    let escaped = text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+    
+    // 소괄호 (...) 문구를 빨간색 강조 스팬 태그로 래핑
+    const highlighted = escaped.replace(/\((.*?)\)/g, '<span class="feedback-highlight">($1)</span>');
+    
+    return highlighted;
+  }
+
   function renderStudentWorkspace() {
     const student = db.students[currentUser.id];
 
@@ -251,10 +266,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const fbDateEl = document.getElementById(`date-${domain}`);
 
       if (fb && fb.text) {
-        fbEl.textContent = fb.text;
+        fbEl.innerHTML = formatFeedbackText(fb.text);
         fbDateEl.textContent = fb.date || '';
       } else {
-        fbEl.textContent = '등록된 피드백이 없습니다.';
+        fbEl.innerHTML = '등록된 피드백이 없습니다.';
         fbDateEl.textContent = '-';
       }
 
@@ -543,10 +558,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm('30101~30125 전체 학생에게 예시 피드백을 생성하시겠습니까? (기존 피드백이 업데이트됩니다)')) return;
 
     const sampleFeedbacks = {
-      autonomy: "학급 환경 정화 활동 및 학급 규칙 준수에 적극적으로 참여함. 특히 학급 자율 프로젝트에서 주도적인 태도로 팀원들의 의견을 수렴함.",
-      career: "인공지능 및 융합 학문에 깊은 관심을 지님. 진로 관련 탐구 보고서 작성을 통해 문제 해결력을 과시함. 구체적인 사례 분석 보완 추천.",
-      korean: "문학 작품을 감상하고 자신의 경험과 연계하여 깊이 있게 비평글을 작성함. 어휘 표현력 및 논리적 전개 구조가 뛰어남.",
-      individual: "타인에 대한 배려심이 깊고 협동 학습 상황에서 맡은 바 역할을 솔선수범하여 완수함. 자기주도적 학습 능력이 매우 탁월함."
+      autonomy: "학급 환경 정화 활동 및 학급 규칙 준수에 적극적으로 참여함. (구체적으로 어떤 학급 프로젝트에서 주도적인 역할을 했는지 내용 보완할 것)",
+      career: "인공지능 및 융합 학문에 깊은 관심을 지님. (희망 직업과 연계된 구체적인 도서명이나 탐구 활동 사례를 적어주세요)",
+      korean: "문학 작품을 감상하고 자신의 경험과 연계하여 깊이 있게 비평글을 작성함. (작품 감상 시 인상 깊었던 구절이나 본인의 느낀 점을 2~3줄 더 보완할 것)",
+      individual: "타인에 대한 배려심이 깊고 협동 학습 상황에서 맡은 바 역할을 솔선수범하여 완수함. (수업 중 주도적으로 발표한 주제를 명시해 줄 것)"
     };
 
     const todayStr = new Date().toLocaleDateString('ko-KR');
@@ -649,6 +664,194 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     pwModal.classList.add('hidden');
+  });
+
+  // --------------------------------------------------------------------------
+  // BATCH FEEDBACK UPLOAD LOGIC (25명 한꺼번에 일괄 등록)
+  // --------------------------------------------------------------------------
+  const batchModal = document.getElementById('batch-feedback-modal');
+  const batchTextInput = document.getElementById('batch-text-input');
+  const batchCsvFile = document.getElementById('batch-csv-file');
+  const batchDomainSelect = document.getElementById('batch-domain-select');
+  const batchPreviewTbody = document.getElementById('batch-preview-tbody');
+  const batchParsedCount = document.getElementById('batch-parsed-count');
+
+  let parsedBatchMap = {}; // { '30101': '피드백...', '30102': '피드백...' }
+
+  document.getElementById('btn-open-batch-modal').addEventListener('click', () => {
+    parsedBatchMap = {};
+    batchTextInput.value = '';
+    batchCsvFile.value = '';
+    renderBatchPreview();
+    batchModal.classList.remove('hidden');
+  });
+
+  // Batch Mode Toggle Buttons
+  const btnModeText = document.getElementById('btn-mode-text');
+  const btnModeCsv = document.getElementById('btn-mode-csv');
+  const containerText = document.getElementById('batch-text-container');
+  const containerCsv = document.getElementById('batch-csv-container');
+
+  btnModeText.addEventListener('click', () => {
+    btnModeText.classList.add('active');
+    btnModeCsv.classList.remove('active');
+    containerText.classList.remove('hidden');
+    containerCsv.classList.add('hidden');
+  });
+
+  btnModeCsv.addEventListener('click', () => {
+    btnModeCsv.classList.add('active');
+    btnModeText.classList.remove('active');
+    containerCsv.classList.remove('hidden');
+    containerText.classList.add('hidden');
+  });
+
+  // Fill Template Button
+  document.getElementById('btn-fill-batch-template').addEventListener('click', () => {
+    btnModeText.click();
+    let templateStr = "";
+    Object.keys(STUDENT_ROSTER).sort().forEach((id) => {
+      templateStr += `${id}: [${STUDENT_ROSTER[id]}] 학생에 대한 피드백 내용 입력...\n`;
+    });
+    batchTextInput.value = templateStr;
+    parseBatchData();
+  });
+
+  // Download CSV Template Button
+  document.getElementById('btn-download-csv-template').addEventListener('click', () => {
+    let csvContent = "\uFEFF학번,이름,피드백내용\n";
+    Object.keys(STUDENT_ROSTER).sort().forEach(id => {
+      csvContent += `${id},${STUDENT_ROSTER[id]},"[${STUDENT_ROSTER[id]}] 학생 피드백을 여기에 입력하세요."\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `3학년1반_생기부피드백_입력양식.csv`;
+    link.click();
+    showToast('25명 피드백 입력용 CSV 양식이 다운로드되었습니다.', 'success');
+  });
+
+  // Parse Trigger
+  document.getElementById('btn-parse-batch').addEventListener('click', parseBatchData);
+  batchTextInput.addEventListener('input', parseBatchData);
+
+  batchCsvFile.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const text = evt.target.result;
+      parseCsvText(text);
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+
+  function parseBatchData() {
+    parsedBatchMap = {};
+    const text = batchTextInput.value.trim();
+    if (!text) {
+      renderBatchPreview();
+      return;
+    }
+
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const rosterIds = Object.keys(STUDENT_ROSTER).sort();
+
+    // Check if line starts with student ID (e.g., 30101: content)
+    let hasExplicitId = false;
+    lines.forEach(line => {
+      const match = line.match(/^(301\d{2})[:\t, ]+(.*)/);
+      if (match) {
+        hasExplicitId = true;
+        const id = match[1];
+        const fbText = match[2].trim();
+        if (STUDENT_ROSTER[id]) {
+          parsedBatchMap[id] = fbText;
+        }
+      }
+    });
+
+    // If no explicit ID pattern found, match line-by-line in 30101~30125 order
+    if (!hasExplicitId && lines.length > 0) {
+      lines.forEach((lineText, index) => {
+        if (index < rosterIds.length) {
+          const studentId = rosterIds[index];
+          parsedBatchMap[studentId] = lineText;
+        }
+      });
+    }
+
+    renderBatchPreview();
+  }
+
+  function parseCsvText(csvText) {
+    parsedBatchMap = {};
+    const lines = csvText.split('\n');
+    lines.forEach(line => {
+      const parts = line.split(',');
+      if (parts.length >= 2) {
+        const id = parts[0].trim().replace(/"/g, '');
+        const fb = parts.slice(1).join(',').trim().replace(/"/g, '');
+        if (STUDENT_ROSTER[id]) {
+          parsedBatchMap[id] = fb;
+        }
+      }
+    });
+    renderBatchPreview();
+  }
+
+  function renderBatchPreview() {
+    batchPreviewTbody.innerHTML = '';
+    const rosterIds = Object.keys(STUDENT_ROSTER).sort();
+    let count = 0;
+
+    rosterIds.forEach(id => {
+      const name = STUDENT_ROSTER[id];
+      const fb = parsedBatchMap[id] || '';
+      if (fb) count++;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${id}</strong></td>
+        <td>${name}</td>
+        <td class="${fb ? '' : 'empty-fb'}">${fb ? fb : '(입력 대기중)'}</td>
+      `;
+      batchPreviewTbody.appendChild(tr);
+    });
+
+    batchParsedCount.textContent = count;
+  }
+
+  // Apply Batch Button
+  document.getElementById('btn-apply-batch').addEventListener('click', () => {
+    const domain = batchDomainSelect.value;
+    const domainName = batchDomainSelect.options[batchDomainSelect.selectedIndex].text;
+    const count = Object.keys(parsedBatchMap).length;
+
+    if (count === 0) {
+      showToast('적용할 피드백 데이터가 없습니다. 텍스트를 입력해주세요.', 'error');
+      return;
+    }
+
+    if (!confirm(`[${domainName}] 영역에 ${count}명의 피드백을 일괄 적용하시겠습니까?`)) return;
+
+    const todayStr = new Date().toLocaleDateString('ko-KR');
+
+    Object.keys(parsedBatchMap).forEach(id => {
+      if (db.students[id]) {
+        db.students[id].feedbacks[domain] = {
+          text: parsedBatchMap[id],
+          date: todayStr
+        };
+      }
+    });
+
+    saveDatabase();
+    showToast(`25명 중 ${count}명의 [${domainName}] 피드백이 일괄 저장되었습니다!`, 'success');
+    batchModal.classList.add('hidden');
+    renderTeacherDashboard();
   });
 
   // Close Modals
