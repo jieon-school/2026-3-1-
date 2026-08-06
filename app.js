@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     individual: 1500
   };
 
-  const STORAGE_KEY = 'school_records_db_v2';
+  const STORAGE_KEY = 'school_records_db_v4';
   const TEACHER_PASSWORD = 'teacher1234';
 
   // Application State
