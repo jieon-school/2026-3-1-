@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const DOMAIN_LIMITS = {
     autonomy: 1500,
-    career: 2100,
+    career: 1500,
     korean: 1500,
     individual: 1500
   };
@@ -174,8 +174,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderHeader();
     renderStudentWorkspace();
 
-    // Check if First Login
-    if (student.isFirstLogin) {
+    // 비밀번호가 초기 학번(id)과 동일하거나 isFirstLogin 상태인 경우에만 비밀번호 변경 모달 팝업
+    if (student.password === id || student.isFirstLogin) {
       openPwModal(true);
     }
   });
@@ -304,13 +304,74 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('input-career-hope').addEventListener('input', () => {
+    updateByteCount('career');
     autoSaveStudentData();
   });
 
+  // 선생님 피드백 복사 및 이대로 적용 버튼 이벤트
+  document.querySelectorAll('.btn-copy-fb').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!currentUser || currentUser.role !== 'student') return;
+      const domain = btn.dataset.domain;
+      const student = db.students[currentUser.id];
+      const fbText = student?.feedbacks[domain]?.text;
+      if (!fbText) {
+        showToast('복사할 피드백이 없습니다.', 'error');
+        return;
+      }
+      navigator.clipboard.writeText(fbText).then(() => {
+        showToast('선생님 피드백이 클립보드에 복사되었습니다!', 'success');
+      }).catch(() => {
+        showToast('복사에 실패했습니다.', 'error');
+      });
+    });
+  });
+
+  document.querySelectorAll('.btn-apply-fb').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!currentUser || currentUser.role !== 'student') return;
+      const domain = btn.dataset.domain;
+      const student = db.students[currentUser.id];
+      const fbText = student?.feedbacks[domain]?.text;
+      if (!fbText) {
+        showToast('적용할 피드백 내용이 없습니다.', 'error');
+        return;
+      }
+
+      // 소괄호 구문 (...) 제거한 본문 추출
+      const cleanBodyText = fbText.replace(/\((.*?)\)/g, '').replace(/[ \t]+\n/g, '\n').trim();
+
+      const textarea = document.getElementById(`input-${domain}`);
+      textarea.value = cleanBodyText;
+
+      updateByteCount(domain);
+      autoSaveStudentData();
+
+      if (fbText.includes('(') && fbText.includes(')')) {
+        showToast('✨ 소괄호 지침을 뺀 피드백 본문이 작성란에 적용되었습니다.', 'success');
+      } else {
+        showToast('✨ 선생님 피드백 그대로 적용되었습니다. 상단의 [🚀 최종 제출하기]를 누르시면 완료됩니다!', 'success');
+      }
+    });
+  });
+
   function updateByteCount(domain) {
-    const textarea = document.getElementById(`input-${domain}`);
-    const bytes = getNeisByteLength(textarea.value);
-    const chars = textarea.value.length;
+    let measuredText = '';
+    let chars = 0;
+
+    if (domain === 'career') {
+      const hopeVal = document.getElementById('input-career-hope').value.trim();
+      const bodyVal = document.getElementById('input-career').value;
+      // 진로희망분야 + 진로활동 본문 합산 (줄바꿈 구분 처리)
+      measuredText = (hopeVal ? hopeVal + '\n' : '') + bodyVal;
+      chars = measuredText.length;
+    } else {
+      const textarea = document.getElementById(`input-${domain}`);
+      measuredText = textarea.value;
+      chars = measuredText.length;
+    }
+
+    const bytes = getNeisByteLength(measuredText);
     const maxBytes = DOMAIN_LIMITS[domain];
 
     const counterEl = document.getElementById(`byte-${domain}`);

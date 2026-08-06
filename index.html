@@ -121,8 +121,14 @@
             <div class="card-body">
               <div class="feedback-box">
                 <div class="feedback-header">
-                  <span class="feedback-tag">💬 선생님 피드백</span>
-                  <span class="feedback-date" id="date-autonomy">-</span>
+                  <div class="fb-tag-group">
+                    <span class="feedback-tag">💬 선생님 피드백</span>
+                    <span class="feedback-date" id="date-autonomy">-</span>
+                  </div>
+                  <div class="fb-actions">
+                    <button type="button" class="btn-fb-action btn-copy-fb" data-domain="autonomy">📋 피드백 복사</button>
+                    <button type="button" class="btn-fb-action btn-apply-fb" data-domain="autonomy">✨ 이대로 적용</button>
+                  </div>
                 </div>
                 <div class="feedback-content" id="feedback-autonomy">
                   등록된 피드백이 없습니다.
@@ -150,20 +156,26 @@
                 <h3>창의적 체험활동 — 진로활동</h3>
               </div>
               <div class="byte-badge-wrapper">
-                <span class="byte-counter" id="byte-career">0 / 2100 Bytes (0자)</span>
+                <span class="byte-counter" id="byte-career">0 / 1500 Bytes (0자)</span>
               </div>
             </div>
             <div class="card-body">
               <!-- 진로희망분야 입력란 (독립된 폼) -->
               <div class="career-hope-box">
-                <label for="input-career-hope">🎯 <strong>진로희망분야</strong> (희망 직업 / 희망 분야)</label>
+                <label for="input-career-hope">🎯 <strong>진로희망분야</strong> (희망 직업 / 희망 분야) <span style="font-size: 12px; color: var(--primary-color); font-weight: normal;">* 진로희망분야와 진로활동 본문이 합산(1,500 Bytes)되어 세어집니다.</span></label>
                 <input type="text" id="input-career-hope" placeholder="예: 인공지능 개발자, 소프트웨어 엔지니어, 국어교사 등" class="hope-input">
               </div>
 
               <div class="feedback-box">
                 <div class="feedback-header">
-                  <span class="feedback-tag">💬 선생님 피드백</span>
-                  <span class="feedback-date" id="date-career">-</span>
+                  <div class="fb-tag-group">
+                    <span class="feedback-tag">💬 선생님 피드백</span>
+                    <span class="feedback-date" id="date-career">-</span>
+                  </div>
+                  <div class="fb-actions">
+                    <button type="button" class="btn-fb-action btn-copy-fb" data-domain="career">📋 피드백 복사</button>
+                    <button type="button" class="btn-fb-action btn-apply-fb" data-domain="career">✨ 이대로 적용</button>
+                  </div>
                 </div>
                 <div class="feedback-content" id="feedback-career">
                   등록된 피드백이 없습니다.
@@ -197,8 +209,14 @@
             <div class="card-body">
               <div class="feedback-box">
                 <div class="feedback-header">
-                  <span class="feedback-tag">💬 선생님 피드백</span>
-                  <span class="feedback-date" id="date-korean">-</span>
+                  <div class="fb-tag-group">
+                    <span class="feedback-tag">💬 선생님 피드백</span>
+                    <span class="feedback-date" id="date-korean">-</span>
+                  </div>
+                  <div class="fb-actions">
+                    <button type="button" class="btn-fb-action btn-copy-fb" data-domain="korean">📋 피드백 복사</button>
+                    <button type="button" class="btn-fb-action btn-apply-fb" data-domain="korean">✨ 이대로 적용</button>
+                  </div>
                 </div>
                 <div class="feedback-content" id="feedback-korean">
                   등록된 피드백이 없습니다.
@@ -232,8 +250,14 @@
             <div class="card-body">
               <div class="feedback-box">
                 <div class="feedback-header">
-                  <span class="feedback-tag">💬 선생님 피드백</span>
-                  <span class="feedback-date" id="date-individual">-</span>
+                  <div class="fb-tag-group">
+                    <span class="feedback-tag">💬 선생님 피드백</span>
+                    <span class="feedback-date" id="date-individual">-</span>
+                  </div>
+                  <div class="fb-actions">
+                    <button type="button" class="btn-fb-action btn-copy-fb" data-domain="individual">📋 피드백 복사</button>
+                    <button type="button" class="btn-fb-action btn-apply-fb" data-domain="individual">✨ 이대로 적용</button>
+                  </div>
                 </div>
                 <div class="feedback-content" id="feedback-individual">
                   등록된 피드백이 없습니다.
@@ -521,6 +545,6 @@
     <div id="toast-container" class="toast-container"></div>
   </div>
 
-  <script src="app.js?v=2.2"></script>
+  <script src="app.js?v=3.1"></script>
 </body>
 </html>
